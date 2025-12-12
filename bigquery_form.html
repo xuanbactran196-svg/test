@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Nhập liệu BigQuery (Ant Design)</title>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Ant Design -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/5.12.2/antd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/5.12.2/reset.min.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+
+        .ant-input {
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+        const { Tabs, Input, Button, Form, Card, message, Space, Row, Col } = antd;
+
+        const App = () => {
+            const [form] = Form.useForm();
+            const [activeTab, setActiveTab] = useState('weight');
+            const [loading, setLoading] = useState(false);
+
+            const onFinish = async (values) => {
+                const currentTabData = values[activeTab];
+
+                // Lọc ra các dòng có dữ liệu
+                const validData = currentTabData?.filter(item =>
+                    item && (item.so_hop_dong || item.ho_ten_nct || item.chi_so)
+                );
+
+                if (!validData || validData.length === 0) {
+                    message.warning('Vui lòng nhập ít nhất một dòng dữ liệu cho tab hiện tại!');
+                    return;
+                }
+
+                setLoading(true);
+                try {
+                    // Giả lập gửi dữ liệu (thay bằng gọi API thực tế)
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    console.log('Gửi dữ liệu:', { category: activeTab, records: validData });
+                    message.success('Dữ liệu đã được gửi thành công!');
+
+                    // Reset dữ liệu của tab hiện tại
+                    const newValues = { ...values };
+                    newValues[activeTab] = [{}]; // Reset về 1 dòng trống
+                    form.setFieldsValue(newValues);
+
+                } catch (error) {
+                    message.error('Có lỗi xảy ra khi gửi dữ liệu.');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const renderTabPane = (name, unit) => (
+                <Form.List name={name} initialValue={[{}]}>
+                    {(fields, { add, remove }) => (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {/* Header Row */}
+                            <Row gutter={8} style={{ fontWeight: 'bold', textAlign: 'center', marginBottom: 5, color: '#666' }}>
+                                <Col span={6}>Số HĐ</Col>
+                                <Col span={9}>Họ tên</Col>
+                                <Col span={6}>Chỉ số</Col>
+                                <Col span={3}></Col>
+                            </Row>
+
+                            {fields.map(({ key, name, ...restField }) => (
+                                <Row key={key} gutter={8}>
+                                    <Col span={6}>
+                                        <Form.Item
+                                            {...restField}
+                                            name={[name, 'so_hop_dong']}
+                                            noStyle
+                                        >
+                                            <Input placeholder="Số HĐ" />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col span={9}>
+                                        <Form.Item
+                                            {...restField}
+                                            name={[name, 'ho_ten_nct']}
+                                            noStyle
+                                        >
+                                            <Input placeholder="Họ tên" />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col span={6}>
+                                        <Form.Item
+                                            {...restField}
+                                            name={[name, 'chi_so']}
+                                            noStyle
+                                        >
+                                            <Input placeholder={unit} />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col span={3} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                        <Button
+                                            type="text"
+                                            danger
+                                            onClick={() => remove(name)}
+                                            icon={
+                                                <svg viewBox="64 64 896 896" focusable="false" data-icon="delete" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M938 296H708.3c1.9-4.8 2.7-10.1 2.7-15.7 0-26.5-21.5-48-48-48h-60.3l-20.8-54.6c-4.5-11.8-15.8-19.7-28.5-19.7h-98.8c-12.7 0-24 7.9-28.5 19.7l-20.8 54.6h-60.3c-26.5 0-48 21.5-48 48 0 5.6.9 10.9 2.7 15.7H86c-17.7 0-32 14.3-32 32v24c0 4.4 3.6 8 8 8h82.5l55.8 564.8c2.4 24.4 23 43.2 47.5 43.2h328.4c24.6 0 45.2-18.8 47.5-43.2l55.8-564.8H938c4.4 0 8-3.6 8-8v-24c0-17.7-14.3-32-32-32zM384 248h256v48H384v-48zm309.1 608H330.9L281.7 384h460.6l-49.2 472z"></path></svg>
+                                            }
+                                        />
+                                    </Col>
+                                </Row>
+                            ))}
+                            <Button type="dashed" onClick={() => add()} block style={{ marginTop: 10 }}>
+                                + Thêm dòng
+                            </Button>
+                        </div>
+                    )}
+                </Form.List>
+            );
+
+            const items = [
+                { key: 'weight', label: 'Cân nặng', children: renderTabPane('weight', 'kg') },
+                { key: 'bp', label: 'Huyết áp', children: renderTabPane('bp', 'mmHg') },
+                { key: 'sugar', label: 'Đường huyết', children: renderTabPane('sugar', 'mmol/L') },
+            ];
+
+            return (
+                <div style={{ maxWidth: 600, margin: '0 auto' }}>
+                    <Card title={<div style={{ textAlign: 'center' }}>Nhập Dữ Liệu</div>} bordered={false} style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                        <Form form={form} onFinish={onFinish} layout="vertical">
+                            <Tabs
+                                activeKey={activeTab}
+                                onChange={setActiveTab}
+                                items={items}
+                                type="card"
+                                style={{ marginBottom: 20 }}
+                            />
+                            <Button type="primary" htmlType="submit" block size="large" loading={loading}>
+                                Submit
+                            </Button>
+                        </Form>
+                    </Card>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
